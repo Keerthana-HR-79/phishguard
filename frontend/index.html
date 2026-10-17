@@ -35,16 +35,20 @@
       <h2>How it works</h2>
       <div class="steps">
         <div class="step">
-          <div class="stepTitle">1. Allowlist</div>
-          <div class="stepDesc">Well-known trusted domains are marked safe straight away.</div>
+          <div class="stepTitle">1. ML model</div>
+          <div class="stepDesc">XGBoost scores every URL from 13 engineered URL features plus TF-IDF character patterns.</div>
         </div>
         <div class="step">
-          <div class="stepTitle">2. Hard rules</div>
-          <div class="stepDesc">A raw IP address, the "@" trick, or brand spoofing with phishing words is flagged immediately.</div>
+          <div class="stepTitle">2. Live blocklist</div>
+          <div class="stepDesc">URLs reported to OpenPhish or PhishTank are flagged as phishing. The OpenPhish feed refreshes every 6 hours.</div>
         </div>
         <div class="step">
-          <div class="stepTitle">3. ML model</div>
-          <div class="stepDesc">XGBoost scores the URL from TF-IDF character patterns plus 13 URL features, and brand checks add to the risk score.</div>
+          <div class="stepTitle">3. Trusted-domain allowlist</div>
+          <div class="stepDesc">Well-known legitimate domains are marked safe, so they never get a false alarm.</div>
+        </div>
+        <div class="step">
+          <div class="stepTitle">4. Risk score</div>
+          <div class="stepDesc">A raw IP host, the "@" trick or a brand look-alike is flagged outright. Otherwise the model's score plus brand and new-domain checks decide: phishing, suspicious or safe.</div>
         </div>
         <div class="step">
           <div class="stepTitle">Chrome extension</div>
