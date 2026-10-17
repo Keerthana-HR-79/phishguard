@@ -45,6 +45,19 @@ def test_hard_rules():
     assert analyze("http://gооgle.com")["result"] == "PHISHING"              # raw Cyrillic 'оо'
 
 
+def test_indian_brands():
+    for url in ["http://sbi-kyc-update.com", "https://hdfc-netbanking.top/login",
+                "http://ѕbi-login.com",                     # Cyrillic 'ѕ'
+                "http://axisbank-kyc.in/verify", "http://yono-sbi-reward.com"]:
+        assert analyze(url)["result"] == "PHISHING", url
+    for url in ["https://onlinesbi.sbi", "https://sbi.co.in", "https://www.hdfcbank.com/login",
+                "https://airtel.in", "https://www.jio.com"]:
+        assert analyze(url)["result"] == "SAFE", url
+    # 3-letter brands must not match inside ordinary words
+    assert not any("Impersonates" in r or "Brand" in r
+                   for r in analyze("https://public-library.org/catalog")["reasons"])
+
+
 def test_blocklist():
     # a reported page on a trusted platform is flagged, matched without scheme/www/trailing '/'
     assert analyze("https://paypal-signin.blogspot.com")["result"] == "PHISHING"
@@ -93,11 +106,26 @@ def test_domain_age():
     assert new["risk_score"] > unknown["risk_score"] or new["risk_score"] == 10
 
 
+def test_rate_limit():
+    import app as app_module
+    app_module.RATE_LIMIT_PER_MIN = 3
+    try:
+        ip = {"X-Forwarded-For": "203.0.113.9"}
+        codes = [client.post("/predict_url", json={"url": "https://google.com"}, headers=ip).status_code
+                 for _ in range(4)]
+        assert codes == [200, 200, 200, 429]
+        other = client.post("/predict_url", json={"url": "https://google.com"},
+                            headers={"X-Forwarded-For": "203.0.113.10"})
+        assert other.status_code == 200                     # limits are per client
+    finally:
+        app_module.RATE_LIMIT_PER_MIN = 120
+
+
 def test_api_roundtrip():
     r = client.post("/predict_url", json={"url": "https://google.com"})
     assert r.status_code == 200 and r.json()["result"] == "SAFE"
     assert client.post("/predict_url", json={"url": "   "}).status_code == 400
     assert client.get("/stats").json()["total_scans"] >= 1
-    assert client.get("/recent?limit=5").json()[0]["url"] == "https://google.com"
+    assert client.get("/recent?limit=5").json()[0]["domain"] == "google.com"   # never the full URL
     health = client.get("/health").json()
     assert health["status"] == "ok" and health["blocklist_urls"] > 50_000 and "feed" in health

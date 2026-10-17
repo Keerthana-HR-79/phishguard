@@ -1,5 +1,7 @@
 """
 database.py — SQLite log of every scan, used by the dashboard.
+Only the domain is stored, never the full URL: the extension checks every page
+a user opens, and paths/queries can hold private data (search terms, tokens).
 Rows older than 30 days are deleted automatically.
 """
 
@@ -22,7 +24,7 @@ def init_db():
         conn.execute("""
             CREATE TABLE IF NOT EXISTS scans (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
-                url           TEXT NOT NULL,
+                domain        TEXT NOT NULL,
                 result        TEXT NOT NULL,
                 risk_score    REAL NOT NULL,
                 response_time REAL NOT NULL,
@@ -31,13 +33,13 @@ def init_db():
         conn.execute("CREATE INDEX IF NOT EXISTS idx_scans_time ON scans(timestamp)")
 
 
-def log_scan(url: str, result: str, risk_score: float, response_time: float):
+def log_scan(domain: str, result: str, risk_score: float, response_time: float):
     now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     cutoff = (now - datetime.timedelta(days=RETENTION_DAYS)).isoformat()
     with _connect() as conn:
-        conn.execute("INSERT INTO scans (url, result, risk_score, response_time, timestamp) "
+        conn.execute("INSERT INTO scans (domain, result, risk_score, response_time, timestamp) "
                      "VALUES (?, ?, ?, ?, ?)",
-                     (url[:500], result, risk_score, round(response_time, 4), now.isoformat()))
+                     (domain[:253], result, risk_score, round(response_time, 4), now.isoformat()))
         conn.execute("DELETE FROM scans WHERE timestamp < ?", (cutoff,))
 
 
@@ -55,8 +57,8 @@ def get_stats() -> dict:
             FROM scans WHERE timestamp >= DATE('now', '-7 days')
             GROUP BY day ORDER BY day""").fetchall()
         top = conn.execute("""
-            SELECT url, COUNT(*) AS count FROM scans
-            WHERE result != 'SAFE' GROUP BY url ORDER BY count DESC LIMIT 10""").fetchall()
+            SELECT domain, COUNT(*) AS count FROM scans
+            WHERE result != 'SAFE' GROUP BY domain ORDER BY count DESC LIMIT 10""").fetchall()
 
     total = t["total"] or 0
     return {

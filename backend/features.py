@@ -23,6 +23,8 @@ with open(os.path.join(os.path.dirname(__file__), "rules.json"), encoding="utf-8
     RULES = json.load(f)
 
 BRANDS = RULES["brands"]
+SHORT_BRANDS = {b for b in BRANDS if len(b) < 4}   # sbi, pnb, jio, lic: exact-word match only
+LONG_BRANDS = [b for b in BRANDS if len(b) >= 4]
 KEYWORDS = RULES["keywords"]
 SUSPICIOUS_TLDS = set(RULES["suspicious_tlds"])
 TRUSTED_ROOTS = set(RULES["trusted_roots"])
@@ -118,16 +120,23 @@ def brand_match(host: str):
     Each host piece (split on '.' and '-') is fuzzy-matched against every brand,
     after undoing homograph letters and digit swaps (0->o, 1->l, 3->e). A match
     whose registrable name is NOT that brand is a spoof (paypa1-login.com).
+    3-letter brands (sbi, pnb, jio, lic) only match a whole piece exactly
+    (sbi-kyc-update.com), since fuzzy-matching them would hit many normal words.
     """
     host_idn = _decode_idn(host)
     pieces = set(re.split(r"[.\-]", host)) | set(re.split(r"[.\-]", _skeleton(host_idn)))
     name = root_domain(host).split(".")[0]
+    tld = host.rsplit(".", 1)[-1]
     best, spoof = 0, None
     for piece in pieces:
         p = re.sub(r"[^a-z0-9]", "", piece).replace("0", "o").replace("1", "l").replace("3", "e")
+        if p in SHORT_BRANDS and piece != tld:     # 'onlinesbi.sbi': the TLD .sbi is not a spoof
+            best = 100
+            if name != p:
+                spoof = p
         if len(p) < 4:
             continue
-        for b in BRANDS:
+        for b in LONG_BRANDS:
             score = fuzz.ratio(p, b)
             if score > 85:
                 best = max(best, score)

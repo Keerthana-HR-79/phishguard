@@ -12,9 +12,10 @@ Run:  uvicorn app:app --reload
 import os
 import threading
 import time
+from collections import deque
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -22,6 +23,32 @@ import database
 import predict
 
 FEED_REFRESH_HOURS = 6
+RATE_LIMIT_PER_MIN = 120   # /predict_url calls per client IP per minute
+
+_hits = {}                 # ip -> timestamps of recent calls
+_hits_lock = threading.Lock()
+
+
+def _allowed(ip: str) -> bool:
+    now = time.time()
+    with _hits_lock:
+        if len(_hits) > 10_000:   # forget idle clients so memory stays bounded
+            for k in [k for k, q in _hits.items() if not q or now - q[-1] > 60]:
+                del _hits[k]
+        q = _hits.setdefault(ip, deque())
+        while q and now - q[0] > 60:
+            q.popleft()
+        if len(q) >= RATE_LIMIT_PER_MIN:
+            return False
+        q.append(now)
+        return True
+
+
+def _client_ip(request: Request) -> str:
+    # Behind Render's proxy the real client is the first X-Forwarded-For entry
+    # (best effort: a client can fake this header, so it's a speed bump, not security).
+    forwarded = request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+    return forwarded or (request.client.host if request.client else "unknown")
 
 
 def _feed_loop():
@@ -51,14 +78,16 @@ class URLRequest(BaseModel):
 
 
 @app.post("/predict_url")
-def predict_url(req: URLRequest):
+def predict_url(req: URLRequest, request: Request):
+    if not _allowed(_client_ip(request)):
+        raise HTTPException(status_code=429, detail="Too many requests, try again in a minute")
     start = time.perf_counter()
     try:
         verdict = predict.analyze(req.url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     try:
-        database.log_scan(verdict["input"], verdict["result"], verdict["risk_score"],
+        database.log_scan(verdict["domain"], verdict["result"], verdict["risk_score"],
                           time.perf_counter() - start)
     except Exception as e:   # logging must never break a verdict
         print(f"[PhishGuard] could not log scan: {e!r}")

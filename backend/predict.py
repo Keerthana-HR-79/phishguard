@@ -22,7 +22,7 @@ import numpy as np
 from rapidfuzz.distance import Levenshtein
 from scipy.sparse import csr_matrix, hstack
 
-from features import (BRANDS, KEYWORDS, SUSPICIOUS_TLDS, TRUSTED_ROOTS, brand_match, ensure_scheme,
+from features import (BRANDS, KEYWORDS, LONG_BRANDS, SUSPICIOUS_TLDS, TRUSTED_ROOTS, brand_match, ensure_scheme,
                       extract_features, has_at_trick, is_ip, parse_host, root_domain)
 
 _DIR = os.path.dirname(__file__)
@@ -221,12 +221,12 @@ def analyze(raw_url: str) -> dict:
             score += BRAND_BUMP
             reasons.append(f"Brand '{brand}' used as a subdomain")
             break
-    for brand in BRANDS:
+    for brand in LONG_BRANDS:   # 'sbi'/'lic' would match inside ordinary words (public, lesbian)
         if brand in name and name != brand:
             score += BRAND_BUMP
             reasons.append(f"Brand '{brand}' inside an unrelated domain")
             break
-    for brand in BRANDS:
+    for brand in LONG_BRANDS:   # one letter off a 3-letter name is just another word
         if Levenshtein.distance(name, brand) == 1:
             score += BRAND_BUMP
             reasons.append(f"Looks like a misspelling of '{brand}'")

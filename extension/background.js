@@ -3,7 +3,10 @@
 // on phishing pages. The popup asks this worker for results too, so the API
 // address and the cache live in one place.
 
-const API_BASE = "https://phishguard-backend-v2-qxrz.onrender.com";  // or http://localhost:8000
+// Backend for this project (Render service "phishguard-ai-simple-api" in render.yaml).
+// After deploying, put the URL Render shows here (it may end in a random suffix).
+// For local testing use "http://127.0.0.1:8000".
+const API_BASE = "https://phishguard-ai-simple-api.onrender.com";
 const CACHE_MS = 60 * 1000;
 const cache = new Map();   // url -> { data, time }
 
@@ -17,6 +20,7 @@ async function checkUrl(url) {
     body: JSON.stringify({ url }),
     signal: AbortSignal.timeout(10000),
   });
+  if (res.status === 429) throw new Error("Too many checks right now, try again in a minute.");
   if (!res.ok) throw new Error(`API error ${res.status}`);
   const data = await res.json();
   cache.set(url, { data, time: Date.now() });
@@ -52,7 +56,7 @@ function showBanner(score, reasons) {
 
   const text = document.createElement("div");
   text.style.flex = "1";
-  text.textContent = `🚨 PhishGuard AI: Phishing detected (risk ${score.toFixed(1)}/10) — ${reasons.join(" · ")}`;
+  text.textContent = `🚨 PhishGuard AI Simple: Phishing detected (risk ${score.toFixed(1)}/10) — ${reasons.join(" · ")}`;
 
   const close = document.createElement("button");
   close.textContent = "✕";
@@ -89,7 +93,9 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   checkUrl(msg.url)
     .then((data) => reply({ data }))
     .catch((e) => reply({
-      error: e.name === "TimeoutError" ? "Request timed out." : "Could not reach the PhishGuard API.",
+      error: e.name === "TimeoutError" ? "Request timed out."
+           : e.message.startsWith("Too many") ? e.message
+           : "Could not reach the PhishGuard API.",
     }));
   return true;   // keep the channel open for the async reply
 });

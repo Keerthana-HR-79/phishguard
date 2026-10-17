@@ -2,7 +2,7 @@
 
 const API_BASE = location.hostname === "localhost" || location.hostname === "127.0.0.1"
   ? "http://127.0.0.1:8000"
-  : "https://phishguard-backend-v2-qxrz.onrender.com";
+  : "https://phishguard-ai-simple-api.onrender.com";   // Render service "phishguard-ai-simple-api"; update after deploy
 
 const COLORS = { PHISHING: "#ef4444", SUSPICIOUS: "#f59e0b", SAFE: "#22c55e" };
 const ICONS  = { PHISHING: "🚨", SUSPICIOUS: "⚠️", SAFE: "✅" };
@@ -15,6 +15,7 @@ function esc(s) {
 
 async function api(path, options = {}) {
   const res = await fetch(API_BASE + path, { ...options, signal: AbortSignal.timeout(15000) });
+  if (res.status === 429) throw new Error("too many checks, try again in a minute");
   if (!res.ok) throw new Error(`API returned ${res.status}`);
   return res.json();
 }
@@ -95,11 +96,11 @@ async function loadDashboard() {
       <div class="barLabel">${esc(d.day.slice(5))}</div></div>`).join("");
 
     const rows = recent.map((e) => `<tr><td class="tdMuted">${esc(e.timestamp.slice(11, 19))}</td>
-      <td class="tdContent">${esc(e.url.slice(0, 60))}</td>
+      <td class="tdContent">${esc(e.domain)}</td>
       <td><span class="badge badge-${e.result.toLowerCase()}">${esc(e.result)}</span></td>
       <td class="tdScore">${e.risk_score.toFixed(1)}</td></tr>`).join("");
 
-    const threats = s.top_threats.map((t) => `<tr><td class="tdContent">${esc(t.url.slice(0, 60))}</td>
+    const threats = s.top_threats.map((t) => `<tr><td class="tdContent">${esc(t.domain)}</td>
       <td class="tdScore">${t.count}</td></tr>`).join("");
 
     root.innerHTML = `
@@ -109,10 +110,10 @@ async function loadDashboard() {
         <div class="chartLegend"><span>■ Total</span><span style="color:${COLORS.PHISHING}">■ Phishing</span></div>`
                : `<div class="noData">No scans yet.</div>`}</div>
       <div class="tableCard"><div class="tableTitle">Recent scans</div><div class="tableWrap">
-        <table class="table"><thead><tr><th>Time</th><th>URL</th><th>Result</th><th>Score</th></tr></thead>
+        <table class="table"><thead><tr><th>Time</th><th>Domain</th><th>Result</th><th>Score</th></tr></thead>
         <tbody>${rows}</tbody></table></div></div>
-      ${threats ? `<div class="tableCard"><div class="tableTitle">Most-flagged URLs</div><div class="tableWrap">
-        <table class="table"><thead><tr><th>URL</th><th>Times flagged</th></tr></thead>
+      ${threats ? `<div class="tableCard"><div class="tableTitle">Most-flagged domains</div><div class="tableWrap">
+        <table class="table"><thead><tr><th>Domain</th><th>Times flagged</th></tr></thead>
         <tbody>${threats}</tbody></table></div></div>` : ""}`;
   } catch (e) {
     root.innerHTML = `<div class="error">Could not load the dashboard from ${esc(API_BASE)} (${esc(e.message)}).</div>`;
