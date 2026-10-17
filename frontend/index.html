@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhishGuard AI — URL Checker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-checker">
+  <nav class="navbar">
+    <a class="navbar-logo" href="index.html">🛡️ PhishGuard AI</a>
+    <ul class="navbar-links">
+      <li><a class="navbar-link active" href="index.html">URL Checker</a></li>
+      <li><a class="navbar-link" href="dashboard.html">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <main class="main">
+    <div class="header">
+      <h1>URL Checker</h1>
+      <p>Paste a link to get an instant phishing verdict.</p>
+    </div>
+
+    <div class="inputRow">
+      <input id="urlInput" type="text" placeholder="https://example.com/login"
+             autocomplete="off" spellcheck="false" aria-label="URL to check">
+      <button id="checkBtn" class="btn-primary">Check</button>
+    </div>
+    <div class="examples"><span class="examplesLabel">Try:</span> <span id="examples"></span></div>
+
+    <div id="error" class="error" hidden role="alert"></div>
+    <div id="result" aria-live="polite"></div>
+
+    <section class="howItWorks">
+      <h2>How it works</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="stepTitle">1. Allowlist</div>
+          <div class="stepDesc">Well-known trusted domains are marked safe straight away.</div>
+        </div>
+        <div class="step">
+          <div class="stepTitle">2. Hard rules</div>
+          <div class="stepDesc">A raw IP address, the "@" trick, or brand spoofing with phishing words is flagged immediately.</div>
+        </div>
+        <div class="step">
+          <div class="stepTitle">3. ML model</div>
+          <div class="stepDesc">XGBoost scores the URL from TF-IDF character patterns plus 13 URL features, and brand checks add to the risk score.</div>
+        </div>
+        <div class="step">
+          <div class="stepTitle">Chrome extension</div>
+          <div class="stepDesc"><a href="phishguard-extension.zip" download>Download</a>, unzip, open
+            <code>chrome://extensions</code>, turn on Developer mode, click <b>Load unpacked</b> and pick the folder.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

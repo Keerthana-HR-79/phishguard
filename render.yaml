@@ -1,0 +1,16 @@
+# Render Blueprint for the backend API. The frontend is a static site on Vercel.
+services:
+  - type: web
+    name: phishguard-backend-v2
+    runtime: python
+    rootDir: backend
+    plan: free
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.1
+      - key: CORS_ORIGINS
+        value: "*"

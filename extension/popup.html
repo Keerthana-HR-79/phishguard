@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PhishGuard AI</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { width: 320px; font: 14px -apple-system, "Segoe UI", sans-serif; background: #0f1117; color: #e8eaf6; }
+    header { display: flex; gap: 10px; align-items: center; padding: 14px 16px; background: #1a1d27; border-bottom: 1px solid #2e3150; }
+    header b { font-size: 15px; }
+    header small { display: block; font-size: 11px; color: #8b90b8; }
+    #url { padding: 10px 16px; font-size: 11px; color: #8b90b8; background: #222535; word-break: break-all; }
+    #status { padding: 32px 16px; text-align: center; color: #8b90b8; font-size: 13px; }
+    #status:empty { display: none; }
+    #result { padding: 20px 16px; text-align: center; }
+    #icon { font-size: 40px; }
+    #verdict { font-size: 20px; font-weight: 800; margin-top: 6px; }
+    #score { font-size: 12px; color: #8b90b8; margin-top: 4px; }
+    .track { height: 5px; background: #2e3150; border-radius: 99px; overflow: hidden; margin-top: 10px; }
+    #bar { height: 100%; }
+    #reasons { text-align: left; margin-top: 14px; padding-left: 18px; font-size: 12px; color: #c5c8e8; }
+    #reasons li { margin-bottom: 4px; }
+    footer { padding: 10px 16px; border-top: 1px solid #2e3150; }
+    button { font-size: 12px; padding: 6px 14px; border-radius: 6px; background: #6366f1; color: #fff; border: none; cursor: pointer; font-weight: 600; }
+    button:hover { background: #4f46e5; }
+  </style>
+</head>
+<body>
+  <header>
+    <span style="font-size:22px">🛡️</span>
+    <div><b>PhishGuard AI</b><small>Real-time phishing detection</small></div>
+  </header>
+  <div id="url"></div>
+  <div id="status">Checking URL…</div>
+  <div id="result" hidden>
+    <div id="icon"></div>
+    <div id="verdict"></div>
+    <div id="score"></div>
+    <div class="track"><div id="bar"></div></div>
+    <ul id="reasons"></ul>
+  </div>
+  <footer><button id="recheck">Re-check</button></footer>
+  <script src="popup.js"></script>
+</body>
+</html>

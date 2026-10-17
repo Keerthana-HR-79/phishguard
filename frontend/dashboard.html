@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PhishGuard AI — Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="page-dashboard">
+  <nav class="navbar">
+    <a class="navbar-logo" href="index.html">🛡️ PhishGuard AI</a>
+    <ul class="navbar-links">
+      <li><a class="navbar-link" href="index.html">URL Checker</a></li>
+      <li><a class="navbar-link active" href="dashboard.html">Dashboard</a></li>
+    </ul>
+  </nav>
+
+  <main class="main">
+    <div class="topBar">
+      <h1>Dashboard</h1>
+      <button id="refreshBtn" class="btn-secondary">↻ Refresh</button>
+    </div>
+    <div id="dashboardRoot"><div class="loading">Loading…</div></div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
