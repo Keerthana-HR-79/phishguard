@@ -3,6 +3,14 @@
 Phishing URL detector: a FastAPI backend with an XGBoost model, a small website
 (URL checker + dashboard) and a Chrome extension.
 
+## Live
+
+- **Website:** https://phishguard-backend-beta.vercel.app
+- **API:** https://phishguard-ai-simple-api.onrender.com (health: `/health`, docs: `/docs`)
+- **Chrome extension:** download `phishguard-extension.zip` from the website, then Load unpacked
+
+The API runs on Render's free plan and sleeps after 15 minutes idle, so the first request can take 30–60 s.
+
 ```
 backend/
   features.py      URL parsing + the 13 hand-crafted features
