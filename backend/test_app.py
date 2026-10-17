@@ -91,6 +91,9 @@ def test_model_runs_first_and_rules_override():
 
 def test_localhost_in_path_is_not_a_bypass():
     assert "Localhost" not in analyze("http://evil.tk/localhost")["reasons"]
+    assert "Localhost" not in analyze("http://127.evil-phish.com/login")["reasons"]   # not a loopback IP
+    assert analyze("http://127.0.0.1:8000/")["reasons"][0] == "Localhost"
+    assert analyze("http://[::1]/")["reasons"][0] == "Localhost"
 
 
 def test_obvious_phishing_is_flagged():

@@ -10,6 +10,7 @@ predict.py — turn a URL into a verdict: SAFE / SUSPICIOUS / PHISHING.
 """
 
 import datetime
+import ipaddress
 import json
 import os
 import pickle
@@ -172,8 +173,8 @@ def _override(url, host):
     key = blocklist_key(url)
     if key in BLOCKLIST or key in LIVE_BLOCKLIST:
         return 10.0, "Reported in a known-phishing blocklist (OpenPhish/PhishTank)"
-    if host == "localhost" or host.startswith("127.") or host == "::1":
-        return 0.0, "Localhost"
+    if host == "localhost" or (is_ip(host) and ipaddress.ip_address(host).is_loopback):
+        return 0.0, "Localhost"     # only real loopback IPs: '127.evil.com' is NOT localhost
     if root in TRUSTED_ROOTS:
         return 0.0, "Trusted domain"
     if is_ip(host):
